@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<head>
+	<meta charset="UTF-8">
+	<title>Papi - PHP API Framework</title> 
+
+	<style type="text/css">
+	html, body { 
+		height:100%;
+		margin: 0;
+		padding: 0;
+		font: 13px/1.4em Verdana;
+		background: #eee;
+	}
+	#container { 
+		padding: 2em;
+		margin: 2em auto;
+		width: 600px; 
+		background: #f8f8f8;
+		border: 2px solid #fff;
+		-moz-box-shadow: 0px 1px 6px #ddd;
+	}
+	
+	fieldset { border: 0px solid #ddd; }
+	
+	hr { border: none; border-top: 1px solid #eee; margin: 1em 0 2em 0;}
+	
+	.button {
+		display: inline-block;
+		zoom: 1; /* zoom and *display = ie7 hack for display:inline-block */
+		*display: inline;
+		vertical-align: baseline;
+		margin: 0 2px;
+		outline: none;
+		cursor: pointer;
+		text-align: center;
+		text-decoration: none;
+		font: 14px/100% Arial, Helvetica, sans-serif;
+		padding: .5em 2em .55em;
+	font-weight: bold;
+		-webkit-border-radius: .5em; 
+		-moz-border-radius: .5em;
+		border-radius: .5em;
+		-webkit-box-shadow: 0 1px 3px rgba(0,0,0,.2);
+		-moz-box-shadow: 0 1px 3px rgba(0,0,0,.2);
+		box-shadow: 0 1px 3px rgba(0,0,0,.2);
+	}
+	.button:hover {
+		text-decoration: none;
+	}
+	.button:active {
+		position: relative;
+		top: 1px;
+	}
+	/* white */
+	.white {
+		color: #606060;
+		border: solid 1px #fff;
+		background: #fff;
+		background: -webkit-gradient(linear, left top, left bottom, from(#fff), to(#ededed));
+		background: -moz-linear-gradient(top,  #fff,  #ededed);
+		filter:  progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffffff', endColorstr='#ededed');
+	}
+	.white:hover {
+		background: #ededed;
+		background: -webkit-gradient(linear, left top, left bottom, from(#fff), to(#dcdcdc));
+		background: -moz-linear-gradient(top,  #fff,  #dcdcdc);
+		filter:  progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffffff', endColorstr='#dcdcdc');
+	}
+	.white:active {
+		color: #999;
+		background: -webkit-gradient(linear, left top, left bottom, from(#ededed), to(#fff));
+		background: -moz-linear-gradient(top,  #ededed,  #fff);
+		filter:  progid:DXImageTransform.Microsoft.gradient(startColorstr='#ededed', endColorstr='#ffffff');
+	}
+	
+	
+	input[type=text]
+	{
+		width:100%;
+		margin: 4px 0 1em 0;
+		padding: .5em;
+		-webkit-box-sizing:border-box; /* Safari/Chrome, other WebKit */
+		-moz-box-sizing:border-box;    /* Firefox, other Gecko */
+		box-sizing:border-box;         /* Opera/IE 8+ */
+	}
+	
+	.delete { float: right; color: #ddd; }
+	.delete:hover { color: red; }
+	</style>
+
+	<!-- Load JavaScript -->
+	<script src="kB.js"></script>
+	<script>
+	kb.ready(function()
+	{
+		// Allow form elements to be added on-the-fly
+		kb.on($('add'), "click", function(e)
+		{
+			// Stop click action
+			kb.stop(e);
+			
+			// Get form element name
+			var name = prompt("What is the name of the API field?", "");
+			
+			// Create a new DOM element
+			var newNode = document.createElement('div');
+			
+			// Insert new input
+			newNode.innerHTML = '<label>' + name + '<a href="javascript://" class="delete" id="' + name + '_delete">delete</a></label><input type="text" name="' + name + '" id="' + name + '" class="text" />';
+
+			// Insert this element after all current elements
+			$('fields').appendChild(newNode);
+			
+			// Fade in
+			kb.fade("in",newNode);
+			
+			// Allow them to remove this node later
+			kb.on($(name + '_delete'), "click", function(e)
+			{
+				// Stop click action
+				kb.stop(e);
+				
+				// Fade out
+				kb.fade("out",newNode,function()
+				{
+					// ...then remove it from the DOM
+					$('fields').removeChild(newNode);
+				})
+			});
+			
+		});
+
+		// On form submit, get API results
+		kb.on($('form'), "submit", function(e)
+		{
+			// Get all the form data
+			var post_data = kb.serialize($('form'));
+			
+			// Get API url
+			var url = $('api').value;
+			
+			// Send AJAX POST request - then run insert_reponse()
+			kb.ajax(url, insert_response, post_data);
+
+			// Cancel submit action!
+			kb.stop(e);
+		});
+
+		// Insert the AJAX response into the DOM
+		var insert_response = function(response)
+		{
+			// Decode JSON response
+			response = kb.jsonDecode(response);
+			
+			// Log the whole response
+			console.log(response);
+			
+			// Create a new DOM element
+			var newNode = document.createElement('div');
+			
+			// Set the element's HTML to the response
+			//newNode.innerHTML = kb.jsonEncode(response).replace(/\{/i, "\n{\n");
+			newNode.innerHTML = '<pre>' + dump(response) + '</pre>';
+			
+			// Insert this element after all current elements
+			//$('response').appendChild(newNode);
+			
+			// Insert this element before all current elements
+			$('response').insertBefore(newNode,$('response').firstChild);
+			
+			// Do that yellow-ajax-flash thingy ;)
+			kb.yellowFade(newNode);
+		}
+	});
+	
+	// Docs: http://www.openjs.com/scripts/others/dump_function_php_print_r.php
+	function dump(arr,level)
+	{
+		var dumped_text = "";
+		if(!level) level = 0;
+		
+		//The padding given at the beginning of the line.
+		var level_padding = "";
+		for(var j=0;j<level+1;j++) level_padding += "    ";
+		
+		if(typeof(arr) == 'object') { //Array/Hashes/Objects 
+			for(var item in arr) {
+				var value = arr[item];
+				
+				if(typeof(value) == 'object') { //If it is an array,
+					dumped_text += level_padding + "'" + item + "' ...\n";
+					dumped_text += dump(value,level+1);
+				} else {
+					dumped_text += level_padding + "'" + item + "' => \"" + value + "\"\n";
+				}
+			}
+		} else { //Stings/Chars/Numbers etc.
+			dumped_text = "===>"+arr+"<===("+typeof(arr)+")";
+		}
+		return dumped_text;
+	}
+	</script>
+</head>
+<body>
+<div id="container">
+
+	<form method="post" id="form">
+		
+		<h2>API Parameters</h2>
+		
+		<label>API Method to call:</label>
+		<input type="text" id="api" value="student/byid" />
+		
+		<hr>
+		
+		<div id="fields"></div>
+		
+		<button id="add" class="button white">Add New</button>
+		
+		<input type="submit" id="submit" class="button white" value="Submit" />
+		
+	</form>
+	
+	<div id="response">
+	</div>
+	
+</div>
+</body>
+</html>
