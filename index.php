@@ -124,7 +124,7 @@ try
 catch (Exception $e)
 {
 	// If we didn't already send a header
-	headers_sent() && header('HTTP/1.1 500 Internal Server Error');
+	headers_sent() or header('HTTP/1.1 500 Internal Server Error');
 	
 	// Log error
 	error_log($e->getMessage(). ' in file '. $e->getFile(). ':'. $e->getLine());
